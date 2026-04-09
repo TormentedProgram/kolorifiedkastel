@@ -205,7 +205,7 @@ void kastel::match(KRunner::RunnerContext &context)
 void kastel::run(const KRunner::RunnerContext &context, const KRunner::QueryMatch &match)
 {
     Q_UNUSED(context);
-    QApplication::clipboard()->setText(match.text().chopped(1));
+    QApplication::clipboard()->setText(match.text().trimmed()); //WHY WOULD THEY CHOP 1 CHARACTER OFF
 }
 
 void kastel::reloadConfiguration() { }
