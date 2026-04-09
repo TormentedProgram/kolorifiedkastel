@@ -40,57 +40,6 @@ void kastel::match(KRunner::RunnerContext &context)
     static QRegularExpression mix(QLatin1String("^(.+?)\\s*\\+\\s*(.+?)(?:\\s+(darken|lighten)\\s+(\\d*\\.?\\d+))?$"));
     static QRegularExpression modify(QLatin1String("^(.+?)\\s+(darken|lighten)\\s+(\\d*\\.?\\d+)$"));
 
-    auto modifyMatch = modify.match(query);
-    if (modifyMatch.hasMatch()) {
-        if (!checkIfPastelInstalled()) {
-            KRunner::QueryMatch m(this);
-            m.setText(QLatin1String("Pastel execution error."));
-            m.setIconName(QLatin1String("dialog-warning"));
-            context.addMatch(m);
-            return;
-        }
-
-        QString color = modifyMatch.captured(1).trimmed();
-        QString op = modifyMatch.captured(2);
-        QString amount = modifyMatch.captured(3);
-
-        QString modified = execCommand(QLatin1String("pastel"),
-            {op, amount, color}).second.trimmed();
-
-        QString finalHex = execCommand(QLatin1String("pastel"),
-            {QLatin1String("format"), QLatin1String("hex"), modified}).second.trimmed();
-
-        QColor finalQColor = QColor::fromString(finalHex);
-        if (!finalQColor.isValid()) return;
-
-        QIcon icon = generateCircleIcon(finalQColor, 64);
-
-        {
-            KRunner::QueryMatch m(this);
-            m.setText(finalHex);
-            m.setIcon(icon);
-            m.setSubtext(QString(QLatin1String("%1(%2) of %3")).arg(op, amount, color));
-            m.setRelevance(1.0);
-            context.addMatch(m);
-        }
-
-        for (const auto &format : formats) {
-            QThreadPool::globalInstance()->start([&, format, modified, icon]() {
-                QString out = execCommand(QLatin1String("pastel"),
-                    {QLatin1String("format"), format, modified}).second.trimmed();
-                KRunner::QueryMatch m(this);
-                m.setText(out);
-                m.setIcon(icon);
-                m.setSubtext(format);
-                m.setRelevance(0.95);
-                context.addMatch(m);
-            });
-        }
-
-        QThreadPool::globalInstance()->waitForDone();
-        return;
-    }
-
     auto mixMatch = mix.match(query);
     if (mixMatch.hasMatch()) {
         if (!checkIfPastelInstalled()) {
@@ -140,6 +89,57 @@ void kastel::match(KRunner::RunnerContext &context)
             QThreadPool::globalInstance()->start([&, format, finalColor, icon]() {
                 QString out = execCommand(QLatin1String("pastel"),
                     {QLatin1String("format"), format, finalColor}).second.trimmed();
+                KRunner::QueryMatch m(this);
+                m.setText(out);
+                m.setIcon(icon);
+                m.setSubtext(format);
+                m.setRelevance(0.95);
+                context.addMatch(m);
+            });
+        }
+
+        QThreadPool::globalInstance()->waitForDone();
+        return;
+    }
+
+    auto modifyMatch = modify.match(query);
+    if (modifyMatch.hasMatch()) {
+        if (!checkIfPastelInstalled()) {
+            KRunner::QueryMatch m(this);
+            m.setText(QLatin1String("Pastel execution error."));
+            m.setIconName(QLatin1String("dialog-warning"));
+            context.addMatch(m);
+            return;
+        }
+
+        QString color = modifyMatch.captured(1).trimmed();
+        QString op = modifyMatch.captured(2);
+        QString amount = modifyMatch.captured(3);
+
+        QString modified = execCommand(QLatin1String("pastel"),
+            {op, amount, color}).second.trimmed();
+
+        QString finalHex = execCommand(QLatin1String("pastel"),
+            {QLatin1String("format"), QLatin1String("hex"), modified}).second.trimmed();
+
+        QColor finalQColor = QColor::fromString(finalHex);
+        if (!finalQColor.isValid()) return;
+
+        QIcon icon = generateCircleIcon(finalQColor, 64);
+
+        {
+            KRunner::QueryMatch m(this);
+            m.setText(finalHex);
+            m.setIcon(icon);
+            m.setSubtext(QString(QLatin1String("%1(%2) of %3")).arg(op, amount, color));
+            m.setRelevance(1.0);
+            context.addMatch(m);
+        }
+
+        for (const auto &format : formats) {
+            QThreadPool::globalInstance()->start([&, format, modified, icon]() {
+                QString out = execCommand(QLatin1String("pastel"),
+                    {QLatin1String("format"), format, modified}).second.trimmed();
                 KRunner::QueryMatch m(this);
                 m.setText(out);
                 m.setIcon(icon);
