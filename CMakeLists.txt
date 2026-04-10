@@ -15,7 +15,7 @@ include(KDEInstallDirs)
 include(KDECMakeSettings)
 include(KDECompilerSettings NO_POLICY_SCOPE)
 
-find_package (Qt6 ${QT_MIN_VERSION} REQUIRED CONFIG COMPONENTS Core Widgets)
+find_package (Qt6 ${QT_MIN_VERSION} REQUIRED CONFIG COMPONENTS Core Widgets DBus)
 find_package (KF6 ${KF6_MIN_VERSION} REQUIRED COMPONENTS Config Runner)
 
 set(KASTEL_SOURCES src/kastel.cpp src/kastel.h src/commands.cpp)
@@ -24,4 +24,4 @@ include_directories (src ${CMAKE_BUILD_DIR})
 
 kcoreaddons_add_plugin(kastel SOURCES ${KASTEL_SOURCES} INSTALL_NAMESPACE "kf6/krunner")
 
-target_link_libraries(kastel KF6::Runner Qt6::Core Qt6::Widgets)
+target_link_libraries(kastel KF6::Runner Qt6::Core Qt6::Widgets Qt6::DBus)
