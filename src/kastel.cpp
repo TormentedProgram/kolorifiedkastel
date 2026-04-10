@@ -12,6 +12,10 @@
 #include <qlogging.h>
 #include "commands.h"
 #include "kastel.h"
+#include <QDBusConnection>
+#include <QDBusMessage>
+#include <QDBusInterface>
+#include <QTimer>
 
 const static QStringList formats(
 {
@@ -244,7 +248,20 @@ void kastel::match(KRunner::RunnerContext &context)
 void kastel::run(const KRunner::RunnerContext &context, const KRunner::QueryMatch &match)
 {
     Q_UNUSED(context);
-    QApplication::clipboard()->setText(match.text().trimmed());
+    const QString text = match.text().trimmed();
+
+    QApplication::clipboard()->setText(text);
+
+    QTimer::singleShot(100, [text]() {
+        QDBusInterface krunner(
+            QStringLiteral("org.kde.krunner"),
+            QStringLiteral("/App"),
+            QStringLiteral("org.kde.krunner.App"),
+            QDBusConnection::sessionBus()
+        );
+        krunner.call(QStringLiteral("display"));
+        krunner.call(QStringLiteral("query"), text + QStringLiteral(" "));
+    });
 }
 
 void kastel::reloadConfiguration() { }
